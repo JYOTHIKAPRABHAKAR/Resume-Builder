@@ -1,6 +1,6 @@
-# 📄 Resume Maker - Professional Resume Builder
+# 📄 ResumeTrick - AI-Powered Resume Builder
 
-A modern, responsive web application for creating professional resumes with beautiful templates and instant PDF download functionality.
+A modern, responsive web application for creating professional resumes with AI assistance, beautiful templates, and instant PDF download functionality.
 
 ![Resume Maker](https://img.shields.io/badge/React-18.0+-blue.svg)
 ![Firebase](https://img.shields.io/badge/Firebase-9.0+-orange.svg)
@@ -10,19 +10,23 @@ A modern, responsive web application for creating professional resumes with beau
 ## 🌟 Features
 
 ### ✨ Core Features
+- **AI-Powered Resume Building**: Smart suggestions and optimization
+- **Live Preview**: Real-time preview as you type with instant updates
 - **Professional Templates**: Modern, ATS-friendly resume templates
-- **Real-time Preview**: Live preview as you type
 - **PDF Export**: Instant download in professional PDF format
-- **User Authentication**: Secure login/signup with Firebase
+- **User Authentication**: Secure login/signup with beautiful gradient design
 - **Data Persistence**: Save and manage multiple resumes
 - **Responsive Design**: Works perfectly on all devices
+- **Certifications & Achievements**: Add professional certifications and achievements
 
 ### 🎨 Design Features
-- **Modern UI/UX**: Clean, professional interface
-- **Dark Theme**: Beautiful dark-themed login interface
+- **Modern UI/UX**: Clean, professional interface with beautiful gradients
+- **Gradient Auth Design**: Stunning pink-to-blue gradient login interface
+- **Live Preview Section**: Dedicated section showcasing real-time preview features
 - **Responsive Navigation**: Hamburger menu for mobile devices
-- **Smooth Animations**: Professional transitions and effects
+- **Smooth Animations**: Professional transitions and hover effects
 - **Mobile-First**: Optimized for all screen sizes
+- **Icon Integration**: Font Awesome icons throughout the interface
 
 ### 🔧 Technical Features
 - **React.js**: Modern component-based architecture
@@ -41,16 +45,17 @@ A modern, responsive web application for creating professional resumes with beau
 - Responsive design across all devices
 
 ### Login/Signup
-- Dark-themed authentication interface
+- Beautiful pink-to-blue gradient authentication interface
 - Secure Firebase authentication
-- Responsive card design
-- Smooth form transitions
+- Responsive card design with hover effects
+- Smooth form transitions and animations
 
 ### Resume Builder
-- Multi-step form wizard
-- Real-time preview
-- Template selection
+- Multi-step form wizard with icons
+- Real-time preview with instant updates
+- Professional template with modern design
 - Instant PDF download
+- Certifications and achievements sections
 
 ## 🚀 Getting Started
 
@@ -207,6 +212,14 @@ resume-builder/
 - **Tablet**: 481px-768px (tablets and large phones)
 - **Desktop**: ≥769px (desktops and laptops)
 - **Large Desktop**: ≥1025px (large screens)
+- **Extra Large**: ≥1441px (large monitors)
+
+### Responsive Features
+- **Flexible Grid System**: Adaptive layouts using Tailwind CSS
+- **Mobile Navigation**: Optimized for touch interactions
+- **Responsive Typography**: Scales appropriately across devices
+- **Touch-Friendly Buttons**: Proper sizing for mobile devices
+- **Scrollable Navigation**: Horizontal scrolling for step navigation
 
 ### Features
 - **Mobile Navigation**: Hamburger menu for mobile devices
@@ -319,12 +332,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔄 Version History
 
-### v1.0.0 (Current)
-- Initial release
-- Basic resume builder functionality
-- Firebase integration
-- Responsive design
-- PDF export feature
+### v1.1.0 (Current)
+- Enhanced homepage with live preview section
+- Beautiful gradient authentication design
+- Improved form navigation with icons
+- Added certifications and achievements sections
+- Enhanced responsive design
+- Better UX with hover effects and animations
 
 ### Planned Features
 - More resume templates
