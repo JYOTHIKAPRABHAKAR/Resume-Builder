@@ -1,5 +1,5 @@
 import React, { useState, createContext, useContext, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import { auth, db } from './firebase';
 import { 
   createUserWithEmailAndPassword, 
@@ -8,6 +8,8 @@ import {
   onAuthStateChanged 
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // --- Context for Resume Data ---
 const ResumeContext = createContext();
@@ -154,15 +156,15 @@ const InputField = ({ label, type = 'text', name, value, onChange, placeholder }
     <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
       {label}
     </label>
-    <input
-      type={type}
-      id={name}
-      name={name}
-      value={value || ''}
-      onChange={onChange}
-      placeholder={placeholder}
+      <input
+        type={type}
+        id={name}
+        name={name}
+        value={value || ''}
+        onChange={onChange}
+        placeholder={placeholder}
       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-    />
+      />
   </div>
 );
 
@@ -300,6 +302,41 @@ const ModernTemplate = ({ data }) => (
         ))}
       </div>
     )}
+
+    {data.certifications && data.certifications.length > 0 && (
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold text-indigo-600 mb-3 border-b pb-2">Certifications</h2>
+        {data.certifications.map((cert, index) => (
+          <div key={index} className="mb-4 last:mb-0">
+            <h3 className="text-lg font-bold">{cert.name || 'Certification Name'}</h3>
+            <p className="text-md text-gray-700">{cert.issuer || 'Issuing Organization'}</p>
+            <p className="text-sm text-gray-500">{cert.issueDate} - {cert.expiryDate || 'No Expiry'}</p>
+            {cert.credentialId && <p className="text-sm text-gray-600">Credential ID: {cert.credentialId}</p>}
+            {cert.url && (
+              <p className="text-sm mt-1">
+                <a href={cert.url} target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">Verify Credential</a>
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+
+    {data.achievements && data.achievements.length > 0 && (
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold text-indigo-600 mb-3 border-b pb-2">Achievements</h2>
+        {data.achievements.map((achievement, index) => (
+          <div key={index} className="mb-4 last:mb-0">
+            <h3 className="text-lg font-bold">{achievement.title || 'Achievement Title'}</h3>
+            <p className="text-md text-gray-700">{achievement.organization || 'Organization'}</p>
+            <p className="text-sm text-gray-500">{achievement.date}</p>
+            {achievement.description && (
+              <p className="text-gray-700 mt-2 leading-relaxed">{achievement.description}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
   </div>
 );
 
@@ -329,45 +366,57 @@ const AuthForm = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-900">Welcome</h2>
-          <p className="text-gray-600 mt-2">Sign in to your account</p>
-        </div>
+    return (
+    <div className="auth-container">
+      <div className="auth-card">
+        <h2 className="text-3xl font-bold text-center mb-2">Welcome</h2>
+        <p className="text-center text-gray-400 mb-8">
+          {isLogin ? 'Sign in to your account' : 'Create your account'}
+        </p>
+
         <form onSubmit={handleSubmit}>
-          <InputField
-            label="Email"
-            type="email"
-            name="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
-            required
-          />
-          <InputField
-            label="Password"
-            type="password"
-            name="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter your password"
-            required
-          />
-          <Button type="submit" className="w-full">
+          <div className="mb-6">
+            <label htmlFor="email" className="block text-sm font-medium mb-2">Email</label>
+            <input
+              type="email"
+              id="email"
+              className="auth-input-field"
+              placeholder="your.email@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="mb-8">
+            <label htmlFor="password" className="block text-sm font-medium mb-2">Password</label>
+            <input
+              type="password"
+              id="password"
+              className="auth-input-field"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button type="submit" className="auth-btn-signin mb-6">
             {isLogin ? 'Sign In' : 'Sign Up'}
-          </Button>
+          </button>
         </form>
-        <div className="text-center mt-4">
+
+        <p className="text-center text-sm">
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button
             type="button"
             onClick={() => setIsLogin(!isLogin)}
-            className="text-indigo-600 hover:text-indigo-500"
+            className="auth-link-text font-medium"
           >
-            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+            {isLogin ? 'Sign up' : 'Sign in'}
           </button>
-        </div>
+        </p>
+        
         <MessageBox message={message} onClose={() => setMessage('')} />
       </div>
     </div>
@@ -380,6 +429,7 @@ const ResumeForm = () => {
   const [step, setStep] = useState(0);
   const [message, setMessage] = useState('');
   const [localSkillsInput, setLocalSkillsInput] = useState(resumeData.skills.join(', '));
+  const resumeRef = useRef();
   
   const steps = [
     { name: 'Personal Info', key: 'personalInfo' },
@@ -387,6 +437,8 @@ const ResumeForm = () => {
     { name: 'Work Experience', key: 'workExperience' },
     { name: 'Skills', key: 'skills' },
     { name: 'Projects', key: 'projects' },
+    { name: 'Certifications', key: 'certifications' },
+    { name: 'Achievements', key: 'achievements' },
   ];
 
   const parseCommaSeparatedString = (str) => str.split(',').map(s => s.trim()).filter(s => s !== '');
@@ -395,7 +447,7 @@ const ResumeForm = () => {
     if (steps[step].key === 'skills') {
       updateResumeData('skills', parseCommaSeparatedString(localSkillsInput));
     }
-    
+
     if (step < steps.length - 1) {
       setStep(prev => prev + 1);
     } else {
@@ -430,6 +482,18 @@ const ResumeForm = () => {
   const removeArrayItem = (sectionKey, index) => {
     const updatedArray = resumeData[sectionKey].filter((_, i) => i !== index);
     updateResumeData(sectionKey, updatedArray);
+  };
+
+  const handleDownload = async () => {
+    const input = resumeRef.current;
+    if (!input) return;
+    const canvas = await html2canvas(input);
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save('resume.pdf');
   };
 
   const renderCurrentStep = () => {
@@ -521,6 +585,46 @@ const ResumeForm = () => {
             </Button>
           </div>
         );
+      case 'certifications':
+        return (
+          <div>
+            {resumeData.certifications.map((cert, index) => (
+              <div key={index} className="border p-4 rounded-md mb-4 bg-gray-50">
+                <InputField label="Certification Name" name="name" value={cert.name} onChange={(e) => handleArrayItemChange('certifications', index, e.target.name, e.target.value)} placeholder="AWS Certified Solutions Architect" />
+                <InputField label="Issuing Organization" name="issuer" value={cert.issuer} onChange={(e) => handleArrayItemChange('certifications', index, e.target.name, e.target.value)} placeholder="Amazon Web Services" />
+                <InputField label="Issue Date" type="month" name="issueDate" value={cert.issueDate} onChange={(e) => handleArrayItemChange('certifications', index, e.target.name, e.target.value)} />
+                <InputField label="Expiry Date (Optional)" type="month" name="expiryDate" value={cert.expiryDate} onChange={(e) => handleArrayItemChange('certifications', index, e.target.name, e.target.value)} />
+                <InputField label="Credential ID (Optional)" name="credentialId" value={cert.credentialId} onChange={(e) => handleArrayItemChange('certifications', index, e.target.name, e.target.value)} placeholder="AWS-123456789" />
+                <InputField label="Credential URL (Optional)" name="url" value={cert.url} onChange={(e) => handleArrayItemChange('certifications', index, e.target.name, e.target.value)} placeholder="https://aws.amazon.com/verification" />
+                <Button onClick={() => removeArrayItem('certifications', index)} className="bg-red-500 hover:bg-red-600 text-sm mt-2">
+                  Remove Certification
+                </Button>
+              </div>
+            ))}
+            <Button onClick={() => addArrayItem('certifications', {})} className="bg-green-500 hover:bg-green-600 text-sm mt-4">
+              Add Certification
+            </Button>
+          </div>
+        );
+      case 'achievements':
+        return (
+          <div>
+            {resumeData.achievements.map((achievement, index) => (
+              <div key={index} className="border p-4 rounded-md mb-4 bg-gray-50">
+                <InputField label="Achievement Title" name="title" value={achievement.title} onChange={(e) => handleArrayItemChange('achievements', index, e.target.name, e.target.value)} placeholder="Employee of the Year" />
+                <InputField label="Organization" name="organization" value={achievement.organization} onChange={(e) => handleArrayItemChange('achievements', index, e.target.name, e.target.value)} placeholder="Tech Solutions Inc." />
+                <InputField label="Date" type="month" name="date" value={achievement.date} onChange={(e) => handleArrayItemChange('achievements', index, e.target.name, e.target.value)} />
+                <TextAreaField label="Description" name="description" value={achievement.description} onChange={(e) => handleArrayItemChange('achievements', index, e.target.name, e.target.value)} placeholder="Recognized for outstanding performance and leadership in developing innovative solutions..." />
+                <Button onClick={() => removeArrayItem('achievements', index)} className="bg-red-500 hover:bg-red-600 text-sm mt-2">
+                  Remove Achievement
+                </Button>
+              </div>
+            ))}
+            <Button onClick={() => addArrayItem('achievements', {})} className="bg-green-500 hover:bg-green-600 text-sm mt-4">
+              Add Achievement
+            </Button>
+          </div>
+        );
       default:
         return null;
     }
@@ -531,99 +635,158 @@ const ResumeForm = () => {
       <div className="w-full max-w-md lg:max-w-lg flex-shrink-0">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">Resume Builder</h2>
-            <button
-              onClick={logout}
-              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition"
-            >
-              Logout
-            </button>
-          </div>
+        <h2 className="text-xl font-semibold text-gray-800">Resume Builder</h2>
+        <button
+          onClick={logout}
+          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition"
+        >
+          Logout
+        </button>
+      </div>
           
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-6">
-            {steps.map((s, i) => (
-              <button
-                key={s.key}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl whitespace-nowrap transition font-medium
-                  ${i === step
+          <div className="flex gap-3 overflow-x-auto pb-4 mb-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        {steps.map((s, i) => (
+          <button
+            key={s.key}
+                className={`flex items-center gap-3 px-6 py-3 rounded-xl whitespace-nowrap transition font-medium min-w-max flex-shrink-0
+              ${i === step
                     ? 'bg-gradient-to-r from-blue-400 to-cyan-400 text-white shadow-lg'
-                    : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100'}
-                `}
-                onClick={() => setStep(i)}
-              >
-                <span>{i + 1}. {s.name}</span>
-              </button>
-            ))}
-          </div>
+                : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 hover:border-gray-300'}
+            `}
+            onClick={() => setStep(i)}
+          >
+            <span className="text-xl">
+              {s.key === 'personalInfo' && '👤'}
+              {s.key === 'education' && '🎓'}
+              {s.key === 'workExperience' && '💼'}
+              {s.key === 'skills' && '⚡'}
+              {s.key === 'projects' && '🚀'}
+              {s.key === 'certifications' && '🏆'}
+              {s.key === 'achievements' && '⭐'}
+            </span>
+            <span className="font-semibold">{i + 1}. {s.name}</span>
+          </button>
+        ))}
+      </div>
           
           <div className="mb-6">
-            <h3 className="text-2xl font-semibold text-gray-800 mb-6">{steps[step].name}</h3>
-            {renderCurrentStep()}
-          </div>
+            <h3 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-3">
+              <span className="text-3xl">
+                {steps[step].key === 'personalInfo' && '👤'}
+                {steps[step].key === 'education' && '🎓'}
+                {steps[step].key === 'workExperience' && '💼'}
+                {steps[step].key === 'skills' && '⚡'}
+                {steps[step].key === 'projects' && '🚀'}
+                {steps[step].key === 'certifications' && '🏆'}
+                {steps[step].key === 'achievements' && '⭐'}
+              </span>
+              {steps[step].name}
+            </h3>
+        {renderCurrentStep()}
+      </div>
           
           <div className="flex justify-between gap-2">
-            <button
-              onClick={handleBack}
-              className={`px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-600 hover:bg-gray-300 transition ${step === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={step === 0}
-            >
-              Previous
-            </button>
-            <button
-              onClick={handleNext}
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-blue-400 to-cyan-400 text-white shadow hover:from-cyan-400 hover:to-blue-400 transition"
-            >
-              {step === steps.length - 1 ? 'Submit & View Preview' : 'Next'}
-            </button>
-          </div>
-        </div>
+        <button
+          onClick={handleBack}
+          className={`px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-600 hover:bg-gray-300 transition ${step === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+          disabled={step === 0}
+        >
+          Previous
+        </button>
+        <button
+          onClick={handleNext}
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-blue-400 to-cyan-400 text-white shadow hover:from-cyan-400 hover:to-blue-400 transition"
+        >
+          {step === steps.length - 1 ? 'Submit & View Preview' : 'Next'}
+        </button>
       </div>
+    </div>
+          </div>
       
       <div className="w-full max-w-2xl flex justify-center">
         <div className="bg-white rounded-lg shadow-lg p-6 w-full">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Live Preview</h2>
-          <div className="border rounded-lg p-6">
+          <button className="download-btn" onClick={handleDownload}>Download PDF</button>
+          <div className="border rounded-lg p-6" ref={resumeRef}>
             <ModernTemplate data={resumeData} />
-          </div>
-        </div>
+    </div>
       </div>
-      
+      </div>
+
       <MessageBox message={message} onClose={() => setMessage('')} />
     </div>
   );
 };
 
 const Home = () => (
-  <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-    <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-      <h1 className="text-5xl font-bold text-gray-900 mb-6">Create Your Professional Resume</h1>
-      <p className="text-xl text-gray-600 mb-8">Build a stunning resume in minutes with our easy-to-use builder</p>
-      <Link to="/login">
-        <Button className="text-lg px-8 py-3">Get Started</Button>
-      </Link>
-    </div>
-  </div>
-);
+  <div className="min-h-screen bg-gray-50">
+    {/* Header */}
+    <header className="bg-white shadow-sm py-4 px-6 md:px-12 flex justify-between items-center rounded-b-lg">
+      <div className="text-2xl font-bold text-blue-600">
+        Resume<span className="text-gray-800">Trick</span>
+      </div>
+    </header>
 
-const NavBar = () => (
-  <nav className="bg-white shadow-lg">
-    <div className="max-w-6xl mx-auto px-4">
-      <div className="flex justify-between items-center py-4">
-        <Link to="/" className="text-2xl font-bold text-indigo-600">Resume Builder</Link>
-        <div className="flex space-x-4">
-          <Link to="/" className="text-gray-700 hover:text-indigo-600">Home</Link>
-          <Link to="/login" className="text-gray-700 hover:text-indigo-600">Login</Link>
+    {/* Hero Section */}
+    <section className="hero-gradient py-20 md:py-32 text-center rounded-b-lg shadow-md">
+      <div className="max-w-4xl mx-auto px-6">
+        <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 leading-tight mb-4">
+          Build Your Resume with <span className="text-blue-700">AI</span> —
+        </h1>
+        <p className="text-2xl md:text-3xl text-gray-700 mb-8 font-medium">
+          Fast, Easy, and Free
+        </p>
+        <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
+          Create your perfect resume in no time, optimized for success.
+        </p>
+        <Link to="/login" className="btn-primary text-white font-semibold py-4 px-10 rounded-full shadow-lg text-lg md:text-xl focus:outline-none focus:ring-4 focus:ring-blue-300 inline-block">
+          Build My Resume Now
+        </Link>
+      </div>
+    </section>
+
+    {/* Live Preview Section */}
+    <section className="py-16 md:py-24 bg-white px-6">
+      <div className="max-w-6xl mx-auto text-center">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-12">
+          See Your Resume Come to Life with Live Preview
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Feature 1 */}
+          <div className="step-card bg-blue-50 p-8 rounded-xl shadow-sm flex flex-col items-center text-center">
+            <div className="text-blue-600 text-5xl mb-4">
+              <i className="fas fa-eye"></i>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">Real-Time Preview</h3>
+            <p className="text-gray-700">Watch your resume update instantly as you type. See exactly how it will look to employers.</p>
+          </div>
+          {/* Feature 2 */}
+          <div className="step-card bg-green-50 p-8 rounded-xl shadow-sm flex flex-col items-center text-center">
+            <div className="text-green-600 text-5xl mb-4">
+              <i className="fas fa-mobile-alt"></i>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">Mobile Responsive</h3>
+            <p className="text-gray-700">Preview your resume on different screen sizes. Ensure it looks perfect on any device.</p>
+          </div>
+          {/* Feature 3 */}
+          <div className="step-card bg-purple-50 p-8 rounded-xl shadow-sm flex flex-col items-center text-center">
+            <div className="text-purple-600 text-5xl mb-4">
+              <i className="fas fa-print"></i>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">Print-Ready Format</h3>
+            <p className="text-gray-700">Your preview shows exactly how your resume will appear when printed or shared as PDF.</p>
+          </div>
         </div>
       </div>
-    </div>
-  </nav>
+    </section>
+  </div>
 );
 
 const AppRoutes = () => {
   return (
     <BrowserRouter>
       <div className="min-h-screen flex flex-col">
-        <NavBar />
+        {/* <NavBar /> removed */}
         <div className="flex-1">
           <Routes>
             <Route path="/" element={<Home />} />
@@ -637,7 +800,7 @@ const AppRoutes = () => {
             <Route path="/resume-form" element={
               <AuthProvider>
                 <ResumeProvider>
-                  <ResumeForm />
+                      <ResumeForm />
                 </ResumeProvider>
               </AuthProvider>
             } />
